@@ -1,0 +1,38 @@
+<!doctype html><html lang="en-GB"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><title>NJF Dashboard</title>
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="NJF Dashboard"><meta name="application-name" content="NJF Dashboard">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#1C1C1E">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="apple-touch-icon.png"><link rel="icon" href="icon-192.png"><link rel="manifest" href="manifest.webmanifest">
+<style>html,body{margin:0;height:100%;background:#1C1C1E;color:#FAFAF8;font-family:Calibri,Carlito,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+#gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px}
+#gate b{display:block;font-size:52px;letter-spacing:.5px;margin-bottom:6px}#gate p{font-size:18px;color:#BBB;margin:0 0 22px}
+#gate input{font:20px -apple-system,sans-serif;width:min(80vw,300px);box-sizing:border-box;text-align:center;padding:12px;border:2px solid #FAFAF8;border-radius:12px;background:#2C2C2E;color:#FAFAF8}
+#gate button{display:block;margin:14px auto 0;font:20px -apple-system,sans-serif;padding:12px 40px;border:0;border-radius:12px;background:#FAFAF8;color:#1C1C1E}
+#err{color:#ff8a80;font-size:16px;min-height:22px;margin-top:14px}
+#fr{display:none;position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff}</style></head>
+<body><div id="gate"><div><b>njf</b><p>Sales dashboard &middot; enter the password</p>
+<form id="f"><input id="pw" type="password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false"><button>Open</button></form><div id="err"></div></div></div>
+<iframe id="fr" allow="fullscreen"></iframe>
+<script>
+const SALT="9fLlE43PN90uspj2LBtnJQ==",IT=600000,CHK="+svugDx7gDDj5A+FNcOa/jdDM6xwkE39CexrcAg9GGiKDm9/d9wP3IGrIFSiAc0zdMg9xzir",LS="njf-dash-key-v2";
+const b=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));let KEY;
+async function dk(p){const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(p),"PBKDF2",false,["deriveBits"]);
+ return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:b(SALT),iterations:IT,hash:"SHA-256"},k,256))}
+async function setKey(raw){KEY=await crypto.subtle.importKey("raw",raw,"AES-GCM",false,["decrypt"])}
+async function gunzip(u){return new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer())}
+async function dec(s){const u=b(s.trim());return gunzip(new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:u.slice(0,12)},KEY,u.slice(12))))}
+const get=async n=>{const r=await fetch(n+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw Error(n+" "+r.status);return r.text()};
+window.njfData=async()=>JSON.parse(new TextDecoder().decode(await dec(await get("data.enc"))));
+async function open_(){const fr=document.getElementById("fr");fr.srcdoc=new TextDecoder().decode(await dec(await get("app.enc")));
+ document.getElementById("gate").style.display="none";fr.style.display="block"}
+async function tryRaw(raw){await setKey(raw);await dec(CHK);return true}
+const err=m=>document.getElementById("err").textContent=m;
+if(!("DecompressionStream" in window))err("Please update iOS (16.4 or later) to open this dashboard.");
+(async()=>{const s=localStorage.getItem(LS);if(s){try{await tryRaw(b(s));await open_();return}catch(e){localStorage.removeItem(LS)}}})();
+document.getElementById("f").onsubmit=async e=>{e.preventDefault();err("Opening…");
+ try{const raw=await dk(document.getElementById("pw").value.trim().toLowerCase());await tryRaw(raw);
+  localStorage.setItem(LS,btoa(String.fromCharCode(...raw)));err("");await open_()}catch(x){err("That password didn't work. Please try again.")}};
+</script></body></html>
