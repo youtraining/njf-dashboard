@@ -27,7 +27,8 @@ async function dec(s){const u=b(s.trim());return gunzip(new Uint8Array(await cry
 const get=async n=>{const r=await fetch(n+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw Error(n+" "+r.status);return r.text()};
 window.njfData=async()=>JSON.parse(new TextDecoder().decode(await dec(await get("data.enc"))));
 async function open_(){const fr=document.getElementById("fr");fr.srcdoc=new TextDecoder().decode(await dec(await get("app.enc")));
- document.getElementById("gate").style.display="none";fr.style.display="block"}
+ document.getElementById("gate").style.display="none";fr.style.display="block"}let CUR="app";async function openP(n){const fr=document.getElementById("fr");fr.srcdoc=new TextDecoder().decode(await dec(await get(n+".enc")));CUR=n;document.getElementById("sw").textContent=n=="app"?"Boards":"Dashboard";location.hash=n=="app"?"":"boards"}
+const _o=open_;open_=async()=>{await _o();const s=document.createElement("button");s.id="sw";s.textContent="Boards";s.style.cssText="position:fixed;z-index:5;right:calc(10px + env(safe-area-inset-right));bottom:calc(12px + env(safe-area-inset-bottom));font:600 15px Calibri,Carlito,-apple-system,sans-serif;padding:10px 16px;border:0;border-radius:999px;background:#1C1C1E;color:#FAFAF8;box-shadow:0 4px 14px rgba(0,0,0,.25)";s.onclick=()=>openP(CUR=="app"?"boards":"app");document.body.appendChild(s);if(location.hash=="#boards")openP("boards")};
 async function tryRaw(raw){await setKey(raw);await dec(CHK);return true}
 const err=m=>document.getElementById("err").textContent=m;
 if(!("DecompressionStream" in window))err("Please update iOS (16.4 or later) to open this dashboard.");
